@@ -52,15 +52,35 @@ docker rm poc-aml-container
 
 ### Environment Variables
 
-If your application requires environment variables, create a `.env` file or pass them when running:
+**IMPORTANT:** This application requires API webhook URLs to be configured. Create a `.env` file in the project root with the following variables:
 
 ```bash
-# With docker-compose, add to docker-compose.yml:
-environment:
-  - NEXT_PUBLIC_API_URL=https://api.example.com
+# Required API Webhook URLs for AML processing nodes
+API_WEBHOOK_URL_1=your_api_webhook_url_for_node_1_here
+API_WEBHOOK_URL_2=your_api_webhook_url_for_node_2_here
+API_WEBHOOK_URL_3=your_api_webhook_url_for_node_3_here
 
-# With docker run:
-docker run -p 9000:9000 -e NEXT_PUBLIC_API_URL=https://api.example.com poc-aml-app
+# Alternative: You can use NEXT_PUBLIC_ prefixed versions for client-side access
+# NEXT_PUBLIC_API_WEBHOOK_URL_1=your_api_webhook_url_for_node_1_here
+# NEXT_PUBLIC_API_WEBHOOK_URL_2=your_api_webhook_url_for_node_2_here
+# NEXT_PUBLIC_API_WEBHOOK_URL_3=your_api_webhook_url_for_node_3_here
+```
+
+The `docker-compose.yml` file is configured to automatically load environment variables from `.env`.
+
+**Without these environment variables, you will see errors like:**
+
+- "API webhook URL for node 3 is not configured"
+- "An error occurred in the Server Components render"
+
+**For docker run (without docker-compose):**
+
+```bash
+docker run -p 9000:9000 \
+  -e API_WEBHOOK_URL_1=your_url_1 \
+  -e API_WEBHOOK_URL_2=your_url_2 \
+  -e API_WEBHOOK_URL_3=your_url_3 \
+  --name poc-aml-container poc-aml-app
 ```
 
 ### Production Considerations
