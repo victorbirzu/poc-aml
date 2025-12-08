@@ -18,6 +18,9 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Create public directory if it doesn't exist (Next.js requires it)
+RUN mkdir -p public
+
 # Build the application
 RUN npm run build
 
@@ -32,12 +35,12 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy standalone build (includes server files and public assets)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
+# Ensure public directory exists (standalone mode includes it, but ensure it's there)
+RUN mkdir -p ./public && chown -R nextjs:nodejs ./public
 
 USER nextjs
 
