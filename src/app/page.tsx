@@ -60,6 +60,7 @@ export default function Home() {
   const [isNode2Completed, setIsNode2Completed] = React.useState(false);
   const [isNode2Error, setIsNode2Error] = React.useState(false);
   const [isRestored, setIsRestored] = React.useState(false);
+  const [isClearing, setIsClearing] = React.useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -136,48 +137,55 @@ export default function Home() {
   };
 
   const handleClear = () => {
-    // Clear sessionStorage
-    sessionStorage.removeItem("lastFormData");
-    sessionStorage.removeItem("dashboard1Response");
-    sessionStorage.removeItem("dashboard2Response");
-    sessionStorage.removeItem("apiResponse");
-    sessionStorage.removeItem("node1Completed");
-    sessionStorage.removeItem("node1Error");
-    sessionStorage.removeItem("node2Completed");
-    sessionStorage.removeItem("node2Error");
-    sessionStorage.removeItem("apiCompleted");
-    sessionStorage.removeItem("node3Error");
-
-    // Reset all state
-    setFormData(null);
-    setApiResponse(null);
-    setIsNode3Processing(false);
-    setApiNodeCompleted(false);
-    setIsNode3Error(false);
-    setNode1Response(null);
-    setIsNode1Processing(false);
-    setIsNode1Completed(false);
-    setIsNode1Error(false);
-    setNode2Response(null);
-    setIsNode2Processing(false);
-    setIsNode2Completed(false);
-    setIsNode2Error(false);
-    setSubmitted(false);
-    setIsSubmitting(false);
-    setEntityType("individual");
+    // Start clearing animation
+    setIsClearing(true);
     setIsRestored(false);
 
-    // Reset form
-    form.reset({
-      entityType: "individual",
-      name: "",
-      identifier: "",
-    });
-
-    // Small delay to ensure state is reset before restoring
+    // Wait for exit animation to complete before resetting layout
     setTimeout(() => {
-      setIsRestored(true);
-    }, 100);
+      // Clear sessionStorage
+      sessionStorage.removeItem("lastFormData");
+      sessionStorage.removeItem("dashboard1Response");
+      sessionStorage.removeItem("dashboard2Response");
+      sessionStorage.removeItem("apiResponse");
+      sessionStorage.removeItem("node1Completed");
+      sessionStorage.removeItem("node1Error");
+      sessionStorage.removeItem("node2Completed");
+      sessionStorage.removeItem("node2Error");
+      sessionStorage.removeItem("apiCompleted");
+      sessionStorage.removeItem("node3Error");
+
+      // Reset all state
+      setFormData(null);
+      setApiResponse(null);
+      setIsNode3Processing(false);
+      setApiNodeCompleted(false);
+      setIsNode3Error(false);
+      setNode1Response(null);
+      setIsNode1Processing(false);
+      setIsNode1Completed(false);
+      setIsNode1Error(false);
+      setNode2Response(null);
+      setIsNode2Processing(false);
+      setIsNode2Completed(false);
+      setIsNode2Error(false);
+      setSubmitted(false);
+      setIsSubmitting(false);
+      setEntityType("individual");
+      setIsClearing(false);
+
+      // Reset form
+      form.reset({
+        entityType: "individual",
+        name: "",
+        identifier: "",
+      });
+
+      // Small delay to ensure state is reset before restoring
+      setTimeout(() => {
+        setIsRestored(true);
+      }, 100);
+    }, ANIMATION_DURATION.normal * 1000 + 100); // Wait for exit animation + buffer
   };
 
   const handleNodeClick = (id?: number | string) => {
@@ -303,150 +311,259 @@ export default function Home() {
     }
   }
 
+  // Animation timing constants for consistency
+  const ANIMATION_DURATION = {
+    fast: 0.3,
+    normal: 0.6,
+    slow: 0.9,
+  };
+
   return (
     <DashboardLayout>
-      <div
+      <motion.div
         className={cn(
-          "flex h-full w-full flex-col items-center gap-8 transition-all duration-1000",
+          "flex h-full w-full flex-col items-center gap-8",
           submitted ? "justify-start pt-16" : "justify-center"
         )}
+        animate={{
+          justifyContent: submitted ? "flex-start" : "center",
+          paddingTop: submitted ? 64 : 0,
+        }}
+        transition={{ duration: ANIMATION_DURATION.slow, ease: "easeInOut" }}
       >
         <motion.div
-          layout
-          transition={{ duration: 1, type: "spring" }}
-          className="w-full max-w-lg"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: ANIMATION_DURATION.normal }}
+          className="text-center space-y-2"
         >
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              <Tabs
-                value={entityType}
-                className="w-full"
-                onValueChange={(value) => {
-                  setEntityType(value);
-                  form.setValue(
-                    "entityType",
-                    value as "individual" | "company"
-                  );
-                }}
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="individual">
-                    <User className="mr-2 h-4 w-4" />
-                    Individual
-                  </TabsTrigger>
-                  <TabsTrigger value="company">
-                    <Building className="mr-2 h-4 w-4" />
-                    Company
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter name..."
-                        {...field}
-                        disabled={isSubmitting || submitted}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="identifier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {entityType === "individual" ? "IDNP" : "IDNO"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={`Enter ${
-                          entityType === "individual" ? "IDNP" : "IDNO"
-                        }...`}
-                        {...field}
-                        disabled={isSubmitting || submitted}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={isSubmitting || submitted}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Process"
-                  )}
-                </Button>
-                {submitted && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClear}
-                    disabled={isSubmitting}
-                    className="flex-shrink-0"
-                    title="Clear search data"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
+          <h1 className="text-4xl font-bold tracking-tight">AML Screening</h1>
+          <p className="text-muted-foreground">
+            Anti-Money Laundering Compliance Check
+          </p>
         </motion.div>
 
-        <AnimatePresence>
-          {submitted && isRestored && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              transition={{ duration: 1 }}
-              className="flex flex-col items-center gap-4"
-            >
-              {formData && (
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold">
-                    {formData.name} / {formData.identifier}
-                  </h2>
+        <motion.div
+          className="flex w-full gap-8"
+          animate={{
+            flexDirection: submitted && !isClearing ? "row" : "column",
+            alignItems: submitted && !isClearing ? "flex-start" : "center",
+            justifyContent: submitted && !isClearing ? "center" : "center",
+            paddingX: submitted && !isClearing ? 16 : 0,
+          }}
+          transition={{ duration: ANIMATION_DURATION.slow, ease: "easeInOut" }}
+        >
+          <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+            }}
+            transition={{
+              layout: {
+                duration: ANIMATION_DURATION.slow,
+                type: "spring",
+                stiffness: 300,
+              },
+              opacity: { duration: ANIMATION_DURATION.normal },
+              scale: { duration: ANIMATION_DURATION.normal },
+            }}
+            className={cn(
+              "rounded-lg p-6 bg-card border border-border transition-all duration-300",
+              submitted ? "w-full max-w-lg flex-shrink-0" : "w-full max-w-lg"
+            )}
+          >
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: ANIMATION_DURATION.normal,
+                    delay: 0.1,
+                  }}
+                  className="space-y-2"
+                >
+                  <FormLabel className="text-base font-bold">
+                    Entity Type
+                  </FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Please choose Individual or Company
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: ANIMATION_DURATION.normal,
+                    delay: 0.2,
+                  }}
+                >
+                  <Tabs
+                    value={entityType}
+                    className="w-full"
+                    onValueChange={(value) => {
+                      setEntityType(value);
+                      form.setValue(
+                        "entityType",
+                        value as "individual" | "company"
+                      );
+                    }}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="individual">
+                        <User className="mr-2 h-4 w-4" />
+                        Individual
+                      </TabsTrigger>
+                      <TabsTrigger value="company">
+                        <Building className="mr-2 h-4 w-4" />
+                        Company
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: ANIMATION_DURATION.normal,
+                    delay: 0.3,
+                  }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter name..."
+                            {...field}
+                            disabled={isSubmitting || submitted}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: ANIMATION_DURATION.normal,
+                    delay: 0.4,
+                  }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="identifier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {entityType === "individual" ? "IDNP" : "IDNO"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={`Enter ${
+                              entityType === "individual" ? "IDNP" : "IDNO"
+                            }...`}
+                            {...field}
+                            disabled={isSubmitting || submitted}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={isSubmitting || submitted}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Process"
+                    )}
+                  </Button>
+                  {submitted && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClear}
+                      disabled={isSubmitting}
+                      className="flex-shrink-0"
+                      title="Clear search data"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-              )}
-              <AnimatedNodes
-                onAnimationComplete={handleAnimationComplete}
-                onNodeClick={handleNodeClick}
-                mainNodeLabel={formData?.name}
-                isApiProcessing={isNode3Processing}
-                isApiCompleted={apiNodeCompleted}
-                isApiError={isNode3Error}
-                isNode1Processing={isNode1Processing}
-                isNode1Completed={isNode1Completed}
-                isNode1Error={isNode1Error}
-                isNode2Processing={isNode2Processing}
-                isNode2Completed={isNode2Completed}
-                isNode2Error={isNode2Error}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              </form>
+            </Form>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            {submitted && isRestored && !isClearing && (
+              <motion.div
+                key="circles-container"
+                initial={{ opacity: 0, x: 50, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 50, scale: 0.95 }}
+                transition={{
+                  duration: ANIMATION_DURATION.normal,
+                  ease: "easeIn",
+                }}
+                className="flex flex-col items-center gap-4 flex-shrink-0"
+              >
+                {formData && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: ANIMATION_DURATION.normal,
+                      delay: 0.4,
+                    }}
+                    className="text-center"
+                  >
+                    <h2 className="text-base font-normal">
+                      {formData.name} / {formData.identifier}
+                    </h2>
+                  </motion.div>
+                )}
+                <AnimatedNodes
+                  onAnimationComplete={handleAnimationComplete}
+                  onNodeClick={handleNodeClick}
+                  mainNodeLabel={formData?.name}
+                  isApiProcessing={isNode3Processing}
+                  isApiCompleted={apiNodeCompleted}
+                  isApiError={isNode3Error}
+                  isNode1Processing={isNode1Processing}
+                  isNode1Completed={isNode1Completed}
+                  isNode1Error={isNode1Error}
+                  isNode2Processing={isNode2Processing}
+                  isNode2Completed={isNode2Completed}
+                  isNode2Error={isNode2Error}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   );
 }

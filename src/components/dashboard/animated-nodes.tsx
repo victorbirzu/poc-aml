@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader, Check, CheckCircle, XCircle } from 'lucide-react';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader, Check, CheckCircle, XCircle } from "lucide-react";
 
 const NODE_SIZE = 110;
 const CONTAINER_SIZE = 450;
@@ -26,7 +26,7 @@ const Line = ({
 
   return (
     <motion.div
-      className={cn('absolute h-0.5 origin-left', color)}
+      className={cn("absolute h-0.5 origin-left", color)}
       style={{
         top: `${from.y}px`,
         left: `${from.x}px`,
@@ -35,7 +35,7 @@ const Line = ({
       }}
       initial={{ width: 0 }}
       animate={{ width: length }}
-      transition={{ duration: 0.8, ease: 'easeInOut', delay }}
+      transition={{ duration: 0.6, ease: "easeInOut", delay }}
     />
   );
 };
@@ -70,26 +70,73 @@ export default function AnimatedNodes({
   isNode2Error = false,
 }: AnimatedNodesProps) {
   const [nodes, setNodes] = React.useState([
-    { id: 0, spinning: true, completed: false, error: false, label: 'MD Justice systems', nodeId: '1' },
-    { id: 1, spinning: true, completed: false, error: false, label: 'Screening', nodeId: '2' },
-    { id: 2, spinning: true, completed: false, error: false, label: 'Reputational & Adverse Media', nodeId: '3' },
+    {
+      id: 0,
+      spinning: true,
+      completed: false,
+      error: false,
+      label: "MD Justice systems",
+      nodeId: "1",
+    },
+    {
+      id: 1,
+      spinning: true,
+      completed: false,
+      error: false,
+      label: "Screening",
+      nodeId: "2",
+    },
+    {
+      id: 2,
+      spinning: true,
+      completed: false,
+      error: false,
+      label: "Reputational & Adverse Media",
+      nodeId: "3",
+    },
   ]);
   const [mainNodeCompleted, setMainNodeCompleted] = React.useState(false);
 
   React.useEffect(() => {
     // API-driven node 2 (Screening) animation
-    if (isNode2Processing !== undefined || isNode2Completed !== undefined || isNode2Error !== undefined) {
+    if (
+      isNode2Processing !== undefined ||
+      isNode2Completed !== undefined ||
+      isNode2Error !== undefined
+    ) {
       setNodes((prev) =>
-        prev.map((n) => (n.id === 1 ? { ...n, spinning: isNode2Processing && !isNode2Error, completed: isNode2Completed && !isNode2Error, error: isNode2Error } : n))
+        prev.map((n) =>
+          n.id === 1
+            ? {
+                ...n,
+                spinning: isNode2Processing && !isNode2Error,
+                completed: isNode2Completed && !isNode2Error,
+                error: isNode2Error,
+              }
+            : n
+        )
       );
     }
   }, [isNode2Processing, isNode2Completed, isNode2Error]);
 
   React.useEffect(() => {
     // API-driven node 1 (MD Justice systems) animation
-    if (isNode1Processing !== undefined || isNode1Completed !== undefined || isNode1Error !== undefined) {
+    if (
+      isNode1Processing !== undefined ||
+      isNode1Completed !== undefined ||
+      isNode1Error !== undefined
+    ) {
       setNodes((prev) =>
-        prev.map((n) => (n.id === 0 ? { ...n, spinning: isNode1Processing && !isNode1Error, completed: isNode1Completed && !isNode1Error, error: isNode1Error } : n))
+        prev.map((n) =>
+          n.id === 0
+            ? {
+                ...n,
+                spinning: isNode1Processing && !isNode1Error,
+                completed: isNode1Completed && !isNode1Error,
+                error: isNode1Error,
+              }
+            : n
+        )
       );
     }
   }, [isNode1Processing, isNode1Completed, isNode1Error]);
@@ -97,7 +144,16 @@ export default function AnimatedNodes({
   React.useEffect(() => {
     // API-driven node 3 (Reputational & Adverse Media) animation
     setNodes((prev) =>
-      prev.map((n) => (n.id === 2 ? { ...n, spinning: isApiProcessing && !isApiError, completed: isApiCompleted && !isApiError, error: isApiError } : n))
+      prev.map((n) =>
+        n.id === 2
+          ? {
+              ...n,
+              spinning: isApiProcessing && !isApiError,
+              completed: isApiCompleted && !isApiError,
+              error: isApiError,
+            }
+          : n
+      )
     );
   }, [isApiProcessing, isApiCompleted, isApiError]);
 
@@ -109,10 +165,9 @@ export default function AnimatedNodes({
         onAnimationComplete();
       }, 500);
     } else {
-        setMainNodeCompleted(false);
+      setMainNodeCompleted(false);
     }
   }, [nodes, onAnimationComplete]);
-
 
   const centerPoint = { x: CONTAINER_SIZE / 2, y: CONTAINER_SIZE / 2 };
   const radius = CONTAINER_SIZE / 2 - NODE_SIZE / 2 - 10;
@@ -126,8 +181,8 @@ export default function AnimatedNodes({
   });
 
   const mainNodeBorderColor = mainNodeCompleted
-    ? 'border-green-500'
-    : 'border-orange-500';
+    ? "border-green-500"
+    : "border-orange-500";
 
   return (
     <div className="relative mb-8 flex w-full items-center justify-center">
@@ -148,8 +203,11 @@ export default function AnimatedNodes({
                 }}
                 delay={0.5 + index * 0.1}
                 color={
-                  nodes[index].error ? 'bg-red-500' : 
-                  nodes[index].completed ? 'bg-green-500' : 'bg-orange-500'
+                  nodes[index].error
+                    ? "bg-red-500"
+                    : nodes[index].completed
+                    ? "bg-green-500"
+                    : "bg-orange-500"
                 }
               />
             ))}
@@ -162,9 +220,9 @@ export default function AnimatedNodes({
               onClick={() => onNodeClick()}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               className={cn(
-                'absolute flex items-center justify-center rounded-full border-4 bg-gray-200 text-lg font-bold text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2',
+                "absolute flex items-center justify-center rounded-full border-4 bg-gray-200 text-lg font-bold text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2",
                 mainNodeBorderColor
               )}
               style={{
@@ -178,11 +236,11 @@ export default function AnimatedNodes({
                 <div className="flex flex-col items-center justify-center gap-1 opacity-80">
                   <CheckCircle className="h-8 w-8 text-green-500" />
                   <span className="text-sm font-semibold">
-                    {mainNodeLabel || 'Main'}
+                    {mainNodeLabel || "Main"}
                   </span>
                 </div>
               ) : (
-                mainNodeLabel || 'Main'
+                mainNodeLabel || "Main"
               )}
             </motion.div>
 
@@ -190,10 +248,10 @@ export default function AnimatedNodes({
             {nodePositions.map((pos, index) => {
               const node = nodes[index];
               const borderColor = node.error
-                ? 'border-red-500'
+                ? "border-red-500"
                 : node.completed
-                ? 'border-green-500'
-                : 'border-orange-500';
+                ? "border-green-500"
+                : "border-orange-500";
 
               return (
                 <motion.div
@@ -212,25 +270,27 @@ export default function AnimatedNodes({
                     opacity: 1,
                   }}
                   transition={{
-                    duration: 0.8,
-                    ease: 'easeOut',
+                    duration: 0.6,
+                    ease: "easeOut",
                     delay: 0.3 + index * 0.1,
                   }}
                   className={cn(
-                    'absolute flex flex-col items-center justify-center rounded-full border-4 bg-gray-200 text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2',
+                    "absolute flex flex-col items-center justify-center rounded-full border-4 bg-gray-200 text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2",
                     borderColor,
-                    node.label.length > 25 ? 'text-xs' : (node.label.length > 15 ? 'text-sm' : 'text-base'),
-                    'font-semibold'
+                    node.label.length > 25
+                      ? "text-xs"
+                      : node.label.length > 15
+                      ? "text-sm"
+                      : "text-base",
+                    "font-semibold"
                   )}
                   style={{
                     height: `${NODE_SIZE}px`,
                     width: `${NODE_SIZE}px`,
                   }}
                 >
-                  <div className='flex flex-col items-center justify-center gap-1'>
-                    {node.error && (
-                      <XCircle className="h-8 w-8 text-red-500" />
-                    )}
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    {node.error && <XCircle className="h-8 w-8 text-red-500" />}
                     {!node.error && node.spinning && (
                       <Loader className="h-8 w-8 animate-spin text-orange-500" />
                     )}

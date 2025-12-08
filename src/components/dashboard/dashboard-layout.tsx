@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -12,16 +13,20 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import Logo from '@/components/logo';
-import { Button } from '@/components/ui/button';
-import { Bell, Home, Settings, ArrowLeft } from 'lucide-react';
+} from "@/components/ui/sidebar";
+import Logo from "@/components/logo";
+import { Button } from "@/components/ui/button";
+import { Bell, Home, Settings } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const pathname = usePathname();
+  const isMainPage = pathname === "/";
+  const headerTitle = isMainPage ? "AML Screening" : "Dashboard";
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -54,13 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="flex h-14 items-center justify-between border-b bg-card px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
-             <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <ArrowLeft className="h-5 w-5" />
-                    <span className="sr-only">Back</span>
-                </Link>
-            </Button>
-            <h2 className="text-lg font-semibold">Dashboard</h2>
+            <h2 className="text-lg font-semibold">{headerTitle}</h2>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
