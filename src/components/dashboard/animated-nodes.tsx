@@ -13,11 +13,13 @@ const Line = ({
   to,
   delay,
   color,
+  isReversing = false,
 }: {
   from: { x: number; y: number };
   to: { x: number; y: number };
   delay: number;
   color: string;
+  isReversing?: boolean;
 }) => {
   const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
   const length = Math.sqrt(
@@ -34,7 +36,7 @@ const Line = ({
         width: `${length}px`,
       }}
       initial={{ width: 0 }}
-      animate={{ width: length }}
+      animate={{ width: isReversing ? 0 : length }}
       transition={{ duration: 0.6, ease: "easeInOut", delay }}
     />
   );
@@ -53,6 +55,7 @@ interface AnimatedNodesProps {
   isNode2Processing?: boolean;
   isNode2Completed?: boolean;
   isNode2Error?: boolean;
+  isClearing?: boolean;
 }
 
 export default function AnimatedNodes({
@@ -68,6 +71,7 @@ export default function AnimatedNodes({
   isNode2Processing = false,
   isNode2Completed = false,
   isNode2Error = false,
+  isClearing = false,
 }: AnimatedNodesProps) {
   const [nodes, setNodes] = React.useState([
     {
@@ -201,7 +205,8 @@ export default function AnimatedNodes({
                   x: pos.x + NODE_SIZE / 2,
                   y: pos.y + NODE_SIZE / 2,
                 }}
-                delay={0.5 + index * 0.1}
+                delay={isClearing ? 0.1 + (2 - index) * 0.1 : 0.5 + index * 0.1}
+                isReversing={isClearing}
                 color={
                   nodes[index].error
                     ? "bg-red-500"
@@ -219,8 +224,15 @@ export default function AnimatedNodes({
             <motion.div
               onClick={() => onNodeClick()}
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              animate={{
+                scale: isClearing ? 0 : 1,
+                opacity: isClearing ? 0 : 1,
+              }}
+              transition={{
+                duration: 0.6,
+                ease: isClearing ? "easeIn" : "easeOut",
+                delay: isClearing ? 0.4 : 0,
+              }}
               className={cn(
                 "absolute flex items-center justify-center rounded-full border-4 bg-gray-200 text-lg font-bold text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2",
                 mainNodeBorderColor
@@ -264,15 +276,17 @@ export default function AnimatedNodes({
                     opacity: 0,
                   }}
                   animate={{
-                    left: pos.x,
-                    top: pos.y,
-                    scale: 1,
-                    opacity: 1,
+                    left: isClearing ? centerPoint.x - NODE_SIZE / 2 : pos.x,
+                    top: isClearing ? centerPoint.y - NODE_SIZE / 2 : pos.y,
+                    scale: isClearing ? 0 : 1,
+                    opacity: isClearing ? 0 : 1,
                   }}
                   transition={{
                     duration: 0.6,
-                    ease: "easeOut",
-                    delay: 0.3 + index * 0.1,
+                    ease: isClearing ? "easeIn" : "easeOut",
+                    delay: isClearing
+                      ? 0.1 + (2 - index) * 0.1
+                      : 0.3 + index * 0.1,
                   }}
                   className={cn(
                     "absolute flex flex-col items-center justify-center rounded-full border-4 bg-gray-200 text-gray-800 transition-colors duration-500 cursor-pointer text-center p-2",

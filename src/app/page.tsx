@@ -185,7 +185,7 @@ export default function Home() {
       setTimeout(() => {
         setIsRestored(true);
       }, 100);
-    }, ANIMATION_DURATION.normal * 1000 + 100); // Wait for exit animation + buffer
+    }, ANIMATION_DURATION.slow * 1000 + 600); // Wait for reverse animation + buffer
   };
 
   const handleNodeClick = (id?: number | string) => {
@@ -322,7 +322,7 @@ export default function Home() {
     <DashboardLayout>
       <motion.div
         className={cn(
-          "flex h-full w-full flex-col items-center gap-8",
+          "flex h-full w-full flex-col  gap-8",
           submitted ? "justify-start pt-16" : "justify-center"
         )}
         animate={{
@@ -346,7 +346,7 @@ export default function Home() {
         <motion.div
           className="flex w-full gap-8"
           animate={{
-            flexDirection: submitted && !isClearing ? "row" : "column",
+            flexDirection: submitted && !isClearing ? "row" : "row",
             alignItems: submitted && !isClearing ? "flex-start" : "center",
             justifyContent: submitted && !isClearing ? "center" : "center",
             paddingX: submitted && !isClearing ? 16 : 0,
@@ -518,15 +518,22 @@ export default function Home() {
           </motion.div>
 
           <AnimatePresence mode="wait">
-            {submitted && isRestored && !isClearing && (
+            {submitted && isRestored && (
               <motion.div
                 key="circles-container"
                 initial={{ opacity: 0, x: 50, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.95 }}
+                animate={{
+                  opacity: isClearing ? 0 : 1,
+                  x: isClearing ? 50 : 0,
+                  scale: isClearing ? 0.95 : 1,
+                }}
+                exit={{ opacity: 0 }}
                 transition={{
-                  duration: ANIMATION_DURATION.normal,
-                  ease: "easeIn",
+                  duration: isClearing
+                    ? ANIMATION_DURATION.slow
+                    : ANIMATION_DURATION.normal,
+                  ease: isClearing ? "easeIn" : "easeOut",
+                  delay: isClearing ? 0.6 : 0.2,
                 }}
                 className="flex flex-col items-center gap-4 flex-shrink-0"
               >
@@ -558,6 +565,7 @@ export default function Home() {
                   isNode2Processing={isNode2Processing}
                   isNode2Completed={isNode2Completed}
                   isNode2Error={isNode2Error}
+                  isClearing={isClearing}
                 />
               </motion.div>
             )}
