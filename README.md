@@ -26,7 +26,7 @@ docker-compose logs -f
 docker-compose down
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:9000`
 
 #### Option 2: Using Docker directly
 
@@ -35,10 +35,10 @@ The application will be available at `http://localhost:3000`
 docker build -t poc-aml-app .
 
 # Run the container
-docker run -p 3000:3000 --name poc-aml-container poc-aml-app
+docker run -p 9000:9000 --name poc-aml-container poc-aml-app
 
 # Run in detached mode
-docker run -d -p 3000:3000 --name poc-aml-container poc-aml-app
+docker run -d -p 9000:9000 --name poc-aml-container poc-aml-app
 
 # View logs
 docker logs -f poc-aml-container
@@ -60,7 +60,7 @@ environment:
   - NEXT_PUBLIC_API_URL=https://api.example.com
 
 # With docker run:
-docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=https://api.example.com poc-aml-app
+docker run -p 9000:9000 -e NEXT_PUBLIC_API_URL=https://api.example.com poc-aml-app
 ```
 
 ### Production Considerations
