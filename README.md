@@ -59,11 +59,13 @@ docker rm poc-aml-container
 API_WEBHOOK_URL_1=your_api_webhook_url_for_node_1_here
 API_WEBHOOK_URL_2=your_api_webhook_url_for_node_2_here
 API_WEBHOOK_URL_3=your_api_webhook_url_for_node_3_here
+API_WEBHOOK_URL_4=your_api_webhook_url_for_node_4_here
 
 # Alternative: You can use NEXT_PUBLIC_ prefixed versions for client-side access
 # NEXT_PUBLIC_API_WEBHOOK_URL_1=your_api_webhook_url_for_node_1_here
 # NEXT_PUBLIC_API_WEBHOOK_URL_2=your_api_webhook_url_for_node_2_here
 # NEXT_PUBLIC_API_WEBHOOK_URL_3=your_api_webhook_url_for_node_3_here
+# NEXT_PUBLIC_API_WEBHOOK_URL_4=your_api_webhook_url_for_node_4_here
 ```
 
 The `docker-compose.yml` file is configured to automatically load environment variables from `.env`.
@@ -71,6 +73,7 @@ The `docker-compose.yml` file is configured to automatically load environment va
 **Without these environment variables, you will see errors like:**
 
 - "API webhook URL for node 3 is not configured"
+- "API webhook URL for node 4 is not configured"
 - "An error occurred in the Server Components render"
 
 **For docker run (without docker-compose):**
@@ -80,6 +83,7 @@ docker run -p 9000:9000 \
   -e API_WEBHOOK_URL_1=your_url_1 \
   -e API_WEBHOOK_URL_2=your_url_2 \
   -e API_WEBHOOK_URL_3=your_url_3 \
+  -e API_WEBHOOK_URL_4=your_url_4 \
   --name poc-aml-container poc-aml-app
 ```
 

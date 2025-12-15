@@ -8,6 +8,8 @@ import SummaryCards from "@/components/dashboard/summary-cards";
 import NarrativeSummaryCard from "@/components/dashboard/narrative-summary-card";
 import { TransactionsTable } from "@/components/dashboard/transactions-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import JsonDisplay from "@/components/dashboard/json-display";
+import LexisNexisDisplay from "@/components/dashboard/lexis-nexis-display";
 
 export default function DashboardPage({
   params,
@@ -19,6 +21,7 @@ export default function DashboardPage({
   const [dashboard2Content, setDashboard2Content] = useState<string | null>(
     null
   );
+  const [dashboard4Data, setDashboard4Data] = useState<any>(null);
   const [dashboard1Data, setDashboard1Data] = useState<AmlReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -113,6 +116,38 @@ export default function DashboardPage({
       } else {
         setApiContent("No data received from the API call.");
       }
+    } else if (id === "4") {
+      const storedData = sessionStorage.getItem("dashboard4Response");
+      if (storedData) {
+        try {
+          const parsedData = JSON.parse(storedData);
+          // Handle array response structure: [{ output: {...} }]
+          if (
+            Array.isArray(parsedData) &&
+            parsedData.length > 0 &&
+            parsedData[0].output
+          ) {
+            setDashboard4Data(parsedData[0].output);
+          } else if (parsedData.output) {
+            // Handle single object with output property
+            setDashboard4Data(parsedData.output);
+          } else {
+            // Fallback: use the data as-is
+            setDashboard4Data(parsedData);
+          }
+        } catch (e) {
+          console.error(
+            "Failed to parse dashboard 4 response from sessionStorage",
+            e
+          );
+          setDashboard4Data(null);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setDashboard4Data(null);
+        setIsLoading(false);
+      }
     }
   }, [id]);
 
@@ -199,6 +234,33 @@ export default function DashboardPage({
               )}
             </CardContent>
           </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (id === "4") {
+    return (
+      <DashboardLayout>
+        <div className="animate-slide-in space-y-4 md:space-y-6">
+          {isLoading ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p>Loading content...</p>
+              </CardContent>
+            </Card>
+          ) : dashboard4Data ? (
+            <LexisNexisDisplay data={dashboard4Data} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Lexis Nexis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>No data available. Please perform a search first.</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DashboardLayout>
     );

@@ -19,24 +19,82 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Building, Loader2, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { User, Building, Loader2, X, CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   processEntity,
   processEntityForDashboard1,
   processEntityForDashboard2,
+  processEntityForDashboard4,
 } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  entityType: z.enum(["individual", "company"]),
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  identifier: z.string().min(5, {
-    message: "Identifier must be at least 5 characters.",
-  }),
-});
+const formSchema = z
+  .object({
+    entityType: z.enum(["individual", "company"]),
+    // Individual fields
+    firstName: z.string().optional(),
+    middleName: z.string().optional(),
+    lastName: z.string().optional(),
+    gender: z.enum(["Male", "Female"]).optional(),
+    dateOfBirth: z.date().optional().nullable(),
+    placeOfBirth: z.string().optional(),
+    // Company fields
+    companyNames: z.array(z.string()).optional(),
+    identifier: z.string().min(5, {
+      message: "Identifier must be at least 5 characters.",
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.entityType === "individual") {
+      if (!data.firstName || data.firstName.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "First name must be at least 2 characters.",
+          path: ["firstName"],
+        });
+      }
+      if (!data.lastName || data.lastName.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Last name must be at least 2 characters.",
+          path: ["lastName"],
+        });
+      }
+    } else {
+      if (!data.companyNames || data.companyNames.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "At least one company name is required.",
+          path: ["companyNames"],
+        });
+      } else {
+        data.companyNames.forEach((name, index) => {
+          if (!name || name.length < 2) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Company name must be at least 2 characters.",
+              path: ["companyNames", index],
+            });
+          }
+        });
+      }
+    }
+  });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -59,6 +117,10 @@ export default function Home() {
   const [isNode2Processing, setIsNode2Processing] = React.useState(false);
   const [isNode2Completed, setIsNode2Completed] = React.useState(false);
   const [isNode2Error, setIsNode2Error] = React.useState(false);
+  const [node4Response, setNode4Response] = React.useState(null);
+  const [isNode4Processing, setIsNode4Processing] = React.useState(false);
+  const [isNode4Completed, setIsNode4Completed] = React.useState(false);
+  const [isNode4Error, setIsNode4Error] = React.useState(false);
   const [isRestored, setIsRestored] = React.useState(false);
   const [isClearing, setIsClearing] = React.useState(false);
 
@@ -66,7 +128,13 @@ export default function Home() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       entityType: "individual",
-      name: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      gender: undefined,
+      dateOfBirth: undefined,
+      placeOfBirth: "",
+      companyNames: [""],
       identifier: "",
     },
   });
@@ -77,16 +145,26 @@ export default function Home() {
     const storedNode1Response = sessionStorage.getItem("dashboard1Response");
     const storedNode2Response = sessionStorage.getItem("dashboard2Response");
     const storedApiResponse = sessionStorage.getItem("apiResponse");
+    const storedNode4Response = sessionStorage.getItem("dashboard4Response");
     const storedNode1Completed = sessionStorage.getItem("node1Completed");
     const storedNode1Error = sessionStorage.getItem("node1Error");
     const storedNode2Completed = sessionStorage.getItem("node2Completed");
     const storedNode2Error = sessionStorage.getItem("node2Error");
     const storedApiCompleted = sessionStorage.getItem("apiCompleted");
     const storedNode3Error = sessionStorage.getItem("node3Error");
+    const storedNode4Completed = sessionStorage.getItem("node4Completed");
+    const storedNode4Error = sessionStorage.getItem("node4Error");
 
     if (storedFormData) {
       try {
         const parsedFormData = JSON.parse(storedFormData);
+        // Convert dateOfBirth string back to Date if it exists
+        if (
+          parsedFormData.dateOfBirth &&
+          typeof parsedFormData.dateOfBirth === "string"
+        ) {
+          parsedFormData.dateOfBirth = new Date(parsedFormData.dateOfBirth);
+        }
         setFormData(parsedFormData);
         setEntityType(parsedFormData.entityType || "individual");
         setSubmitted(true);
@@ -129,6 +207,17 @@ export default function Home() {
       }
     }
 
+    if (storedNode4Response) {
+      try {
+        const parsed = JSON.parse(storedNode4Response);
+        setNode4Response(parsed);
+        setIsNode4Completed(storedNode4Completed === "true");
+        setIsNode4Error(storedNode4Error === "true");
+      } catch (e) {
+        console.error("Failed to parse stored node4 response", e);
+      }
+    }
+
     setIsRestored(true);
   }, [form]);
 
@@ -148,12 +237,15 @@ export default function Home() {
       sessionStorage.removeItem("dashboard1Response");
       sessionStorage.removeItem("dashboard2Response");
       sessionStorage.removeItem("apiResponse");
+      sessionStorage.removeItem("dashboard4Response");
       sessionStorage.removeItem("node1Completed");
       sessionStorage.removeItem("node1Error");
       sessionStorage.removeItem("node2Completed");
       sessionStorage.removeItem("node2Error");
       sessionStorage.removeItem("apiCompleted");
       sessionStorage.removeItem("node3Error");
+      sessionStorage.removeItem("node4Completed");
+      sessionStorage.removeItem("node4Error");
 
       // Reset all state
       setFormData(null);
@@ -169,6 +261,10 @@ export default function Home() {
       setIsNode2Processing(false);
       setIsNode2Completed(false);
       setIsNode2Error(false);
+      setNode4Response(null);
+      setIsNode4Processing(false);
+      setIsNode4Completed(false);
+      setIsNode4Error(false);
       setSubmitted(false);
       setIsSubmitting(false);
       setEntityType("individual");
@@ -177,7 +273,13 @@ export default function Home() {
       // Reset form
       form.reset({
         entityType: "individual",
-        name: "",
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        gender: undefined,
+        dateOfBirth: undefined,
+        placeOfBirth: "",
+        companyNames: [""],
         identifier: "",
       });
 
@@ -202,6 +304,11 @@ export default function Home() {
       );
     } else if (id === "3" && apiResponse) {
       sessionStorage.setItem("apiResponse", JSON.stringify(apiResponse));
+    } else if (id === "4" && node4Response) {
+      sessionStorage.setItem(
+        "dashboard4Response",
+        JSON.stringify(node4Response)
+      );
     }
     // Don't remove data when clicking nodes - keep it for navigation back
 
@@ -214,17 +321,42 @@ export default function Home() {
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true);
-    setFormData(values);
+
+    // Construct name for API calls
+    // For requests 1, 2, 3: use first company name or individual name
+    // For request 4: use full companyNames array
+    const firstCompanyName =
+      values.entityType === "company" &&
+      values.companyNames &&
+      values.companyNames.length > 0
+        ? values.companyNames[0]
+        : "";
+
+    const apiFormData = {
+      ...values,
+      name:
+        values.entityType === "individual"
+          ? [
+              values.firstName || "",
+              values.middleName || "",
+              values.lastName || "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : firstCompanyName,
+    } as FormData & { name: string };
+
+    setFormData(apiFormData);
     setSubmitted(true);
 
     // Save form data to sessionStorage
-    sessionStorage.setItem("lastFormData", JSON.stringify(values));
+    sessionStorage.setItem("lastFormData", JSON.stringify(apiFormData));
 
     // Start all API calls in parallel
     const node1Promise = (async () => {
       setIsNode1Processing(true);
       try {
-        const response = await processEntityForDashboard1(values);
+        const response = await processEntityForDashboard1(apiFormData);
         setNode1Response(response);
         setIsNode1Completed(true);
         setIsNode1Error(false);
@@ -252,7 +384,7 @@ export default function Home() {
     const node2Promise = (async () => {
       setIsNode2Processing(true);
       try {
-        const response = await processEntityForDashboard2(values);
+        const response = await processEntityForDashboard2(apiFormData);
         setNode2Response(response);
         setIsNode2Completed(true);
         setIsNode2Error(false);
@@ -279,7 +411,7 @@ export default function Home() {
     const node3Promise = (async () => {
       setIsNode3Processing(true);
       try {
-        const response = await processEntity(values);
+        const response = await processEntity(apiFormData);
         setApiResponse(response);
         setApiNodeCompleted(true);
         setIsNode3Error(false);
@@ -304,8 +436,42 @@ export default function Home() {
       }
     })();
 
+    const node4Promise = (async () => {
+      setIsNode4Processing(true);
+      try {
+        // For request 4, send the full form data with companyNames array
+        const response = await processEntityForDashboard4(values);
+        setNode4Response(response);
+        setIsNode4Completed(true);
+        setIsNode4Error(false);
+        // Save to sessionStorage
+        sessionStorage.setItem("dashboard4Response", JSON.stringify(response));
+        sessionStorage.setItem("node4Completed", "true");
+        sessionStorage.removeItem("node4Error");
+      } catch (error) {
+        console.error("API call for node 4 failed:", error);
+        setIsNode4Completed(false);
+        setIsNode4Error(true);
+        sessionStorage.setItem("node4Completed", "false");
+        sessionStorage.setItem("node4Error", "true");
+        toast({
+          variant: "destructive",
+          title: "An error occurred",
+          description:
+            "Failed to fetch data for Lexis Nexis. Please try again.",
+        });
+      } finally {
+        setIsNode4Processing(false);
+      }
+    })();
+
     try {
-      await Promise.all([node1Promise, node2Promise, node3Promise]);
+      await Promise.all([
+        node1Promise,
+        node2Promise,
+        node3Promise,
+        node4Promise,
+      ]);
     } finally {
       setIsSubmitting(false);
     }
@@ -344,12 +510,14 @@ export default function Home() {
         </motion.div>
 
         <motion.div
-          className="flex w-full gap-8"
+          className={cn(
+            "flex w-full gap-8 transition-all duration-300",
+            submitted && !isClearing ? "px-4 lg:px-8" : "px-0"
+          )}
           animate={{
             flexDirection: submitted && !isClearing ? "row" : "row",
             alignItems: submitted && !isClearing ? "flex-start" : "center",
             justifyContent: submitted && !isClearing ? "center" : "center",
-            paddingX: submitted && !isClearing ? 16 : 0,
           }}
           transition={{ duration: ANIMATION_DURATION.slow, ease: "easeInOut" }}
         >
@@ -427,63 +595,280 @@ export default function Home() {
                   </Tabs>
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: ANIMATION_DURATION.normal,
-                    delay: 0.3,
-                  }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter name..."
-                            {...field}
-                            disabled={isSubmitting || submitted}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
+                {entityType === "individual" ? (
+                  <>
+                    {/* First Name */}
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter first name..."
+                              {...field}
+                              disabled={isSubmitting || submitted}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: ANIMATION_DURATION.normal,
-                    delay: 0.4,
-                  }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="identifier"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {entityType === "individual" ? "IDNP" : "IDNO"}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={`Enter ${
-                              entityType === "individual" ? "IDNP" : "IDNO"
-                            }...`}
-                            {...field}
-                            disabled={isSubmitting || submitted}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
+                    {/* Middle Name */}
+                    <FormField
+                      control={form.control}
+                      name="middleName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Middle Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter middle name (optional)..."
+                              {...field}
+                              disabled={isSubmitting || submitted}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Last Name */}
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter last name..."
+                              {...field}
+                              disabled={isSubmitting || submitted}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* IDNP */}
+                    <FormField
+                      control={form.control}
+                      name="identifier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>IDNP *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter IDNP..."
+                              {...field}
+                              disabled={isSubmitting || submitted}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Gender, Date of Birth, and Place of Birth in one row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Gender */}
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Gender</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ""}
+                              disabled={isSubmitting || submitted}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Gender" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Male">Male</SelectItem>
+                                <SelectItem value="Female">Female</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Date of Birth */}
+                      <FormField
+                        control={form.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Date of Birth</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "h-10 w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled={isSubmitting || submitted}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value || undefined}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() ||
+                                    date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Place of Birth */}
+                      <FormField
+                        control={form.control}
+                        name="placeOfBirth"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Place of Birth</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ""}
+                              disabled={isSubmitting || submitted}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Place" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="MD">MD - Moldova</SelectItem>
+                                <SelectItem value="RO">RO - Romania</SelectItem>
+                                <SelectItem value="RU">RU - Russia</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Company Names */}
+                    <FormField
+                      control={form.control}
+                      name="companyNames"
+                      render={({ field }) => {
+                        // Ensure field.value is always an array
+                        const companyNames = Array.isArray(field.value)
+                          ? field.value
+                          : [""];
+
+                        return (
+                          <FormItem>
+                            <FormLabel>Company Names *</FormLabel>
+                            <div className="space-y-2">
+                              {companyNames.map((name, index) => (
+                                <div key={index} className="flex gap-2">
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Enter company name..."
+                                      value={name}
+                                      onChange={(e) => {
+                                        const newNames = [...companyNames];
+                                        newNames[index] = e.target.value;
+                                        field.onChange(newNames);
+                                      }}
+                                      disabled={isSubmitting || submitted}
+                                    />
+                                  </FormControl>
+                                  {index > 0 && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => {
+                                        const newNames = companyNames.filter(
+                                          (_, i) => i !== index
+                                        );
+                                        field.onChange(
+                                          newNames.length > 0 ? newNames : [""]
+                                        );
+                                      }}
+                                      disabled={isSubmitting || submitted}
+                                      className="shrink-0"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  field.onChange([...companyNames, ""]);
+                                }}
+                                disabled={isSubmitting || submitted}
+                                className="w-full"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Company Name
+                              </Button>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
+
+                    {/* IDNO */}
+                    <FormField
+                      control={form.control}
+                      name="identifier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>IDNO *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter IDNO..."
+                              {...field}
+                              disabled={isSubmitting || submitted}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
 
                 <div className="flex gap-2">
                   <Button
@@ -548,14 +933,27 @@ export default function Home() {
                     className="text-center"
                   >
                     <h2 className="text-base font-normal">
-                      {formData.name} / {formData.identifier}
+                      {formData.entityType === "individual"
+                        ? `${formData.firstName || ""} ${
+                            formData.lastName || ""
+                          }`.trim() || formData.identifier
+                        : formData.companyNames?.filter(Boolean).join(", ") ||
+                          formData.identifier}{" "}
+                      / {formData.identifier}
                     </h2>
                   </motion.div>
                 )}
                 <AnimatedNodes
                   onAnimationComplete={handleAnimationComplete}
                   onNodeClick={handleNodeClick}
-                  mainNodeLabel={formData?.name}
+                  mainNodeLabel={
+                    formData?.entityType === "individual"
+                      ? `${formData.firstName || ""} ${
+                          formData.lastName || ""
+                        }`.trim() || formData?.identifier
+                      : formData?.companyNames?.filter(Boolean).join(", ") ||
+                        formData?.identifier
+                  }
                   isApiProcessing={isNode3Processing}
                   isApiCompleted={apiNodeCompleted}
                   isApiError={isNode3Error}
@@ -565,6 +963,9 @@ export default function Home() {
                   isNode2Processing={isNode2Processing}
                   isNode2Completed={isNode2Completed}
                   isNode2Error={isNode2Error}
+                  isNode4Processing={isNode4Processing}
+                  isNode4Completed={isNode4Completed}
+                  isNode4Error={isNode4Error}
                   isClearing={isClearing}
                 />
               </motion.div>

@@ -77,3 +77,26 @@ export type Document = {
 export type PostBody = {
     name: string;
 }
+
+// Country code type (ISO 3166-1 alpha-2)
+export type Alpha2CountryCode = string;
+
+// Business entity type
+export type Business = {
+  entityType: "Business";
+  companyNames: string[];
+};
+
+// Individual entity type
+export type Individual = {
+  entityType: "Individual";
+  firstName: string;
+  middleName: string | "";
+  lastName: string;
+  gender: "Male" | "Female";
+  dateOfBirth?: `${string}-${string}-${string}`; // format YYYY-MM-DD
+  placeOfBirth?: Alpha2CountryCode; // defaults to "MD"
+};
+
+// Request body type for Lexis Nexis (4th circle)
+export type RequestBody = Business | Individual;

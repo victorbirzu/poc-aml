@@ -55,6 +55,9 @@ interface AnimatedNodesProps {
   isNode2Processing?: boolean;
   isNode2Completed?: boolean;
   isNode2Error?: boolean;
+  isNode4Processing?: boolean;
+  isNode4Completed?: boolean;
+  isNode4Error?: boolean;
   isClearing?: boolean;
 }
 
@@ -71,6 +74,9 @@ export default function AnimatedNodes({
   isNode2Processing = false,
   isNode2Completed = false,
   isNode2Error = false,
+  isNode4Processing = false,
+  isNode4Completed = false,
+  isNode4Error = false,
   isClearing = false,
 }: AnimatedNodesProps) {
   const [nodes, setNodes] = React.useState([
@@ -97,6 +103,14 @@ export default function AnimatedNodes({
       error: false,
       label: "Reputational & Adverse Media",
       nodeId: "3",
+    },
+    {
+      id: 3,
+      spinning: true,
+      completed: false,
+      error: false,
+      label: "Lexis Nexis",
+      nodeId: "4",
     },
   ]);
   const [mainNodeCompleted, setMainNodeCompleted] = React.useState(false);
@@ -162,6 +176,28 @@ export default function AnimatedNodes({
   }, [isApiProcessing, isApiCompleted, isApiError]);
 
   React.useEffect(() => {
+    // API-driven node 4 (Lexis Nexis) animation
+    if (
+      isNode4Processing !== undefined ||
+      isNode4Completed !== undefined ||
+      isNode4Error !== undefined
+    ) {
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === 3
+            ? {
+                ...n,
+                spinning: isNode4Processing && !isNode4Error,
+                completed: isNode4Completed && !isNode4Error,
+                error: isNode4Error,
+              }
+            : n
+        )
+      );
+    }
+  }, [isNode4Processing, isNode4Completed, isNode4Error]);
+
+  React.useEffect(() => {
     const allCompleted = nodes.every((n) => n.completed);
     if (allCompleted) {
       setTimeout(() => {
@@ -176,8 +212,8 @@ export default function AnimatedNodes({
   const centerPoint = { x: CONTAINER_SIZE / 2, y: CONTAINER_SIZE / 2 };
   const radius = CONTAINER_SIZE / 2 - NODE_SIZE / 2 - 10;
 
-  const nodePositions = Array.from({ length: 3 }).map((_, index) => {
-    const angle = (index * 2 * Math.PI) / 3 - Math.PI / 2; // Start from top
+  const nodePositions = Array.from({ length: 4 }).map((_, index) => {
+    const angle = (index * 2 * Math.PI) / 4 - Math.PI / 2; // Start from top
     return {
       x: centerPoint.x + radius * Math.cos(angle) - NODE_SIZE / 2,
       y: centerPoint.y + radius * Math.sin(angle) - NODE_SIZE / 2,
@@ -205,7 +241,7 @@ export default function AnimatedNodes({
                   x: pos.x + NODE_SIZE / 2,
                   y: pos.y + NODE_SIZE / 2,
                 }}
-                delay={isClearing ? 0.1 + (2 - index) * 0.1 : 0.5 + index * 0.1}
+                delay={isClearing ? 0.1 + (3 - index) * 0.1 : 0.5 + index * 0.1}
                 isReversing={isClearing}
                 color={
                   nodes[index].error
@@ -285,7 +321,7 @@ export default function AnimatedNodes({
                     duration: 0.6,
                     ease: isClearing ? "easeIn" : "easeOut",
                     delay: isClearing
-                      ? 0.1 + (2 - index) * 0.1
+                      ? 0.1 + (3 - index) * 0.1
                       : 0.3 + index * 0.1,
                   }}
                   className={cn(
