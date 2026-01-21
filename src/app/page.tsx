@@ -55,9 +55,12 @@ const formSchema = z
     placeOfBirth: z.string().optional(),
     // Company fields
     companyNames: z.array(z.string()).optional(),
-    identifier: z.string().min(5, {
-      message: "Identifier must be at least 5 characters.",
-    }),
+    identifier: z.string().optional().refine(
+      (val) => !val || val.length >= 5,
+      {
+        message: "Identifier must be at least 5 characters.",
+      }
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.entityType === "individual") {
@@ -660,10 +663,10 @@ export default function Home() {
                       name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>IDNP *</FormLabel>
+                          <FormLabel>IDNP</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter IDNP..."
+                              placeholder="Enter IDNP (optional)..."
                               {...field}
                               disabled={isSubmitting || submitted}
                             />
@@ -858,10 +861,10 @@ export default function Home() {
                       name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>IDNO *</FormLabel>
+                          <FormLabel>IDNO</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter IDNO..."
+                              placeholder="Enter IDNO (optional)..."
                               {...field}
                               disabled={isSubmitting || submitted}
                             />
@@ -939,10 +942,9 @@ export default function Home() {
                       {formData.entityType === "individual"
                         ? `${formData.firstName || ""} ${
                             formData.lastName || ""
-                          }`.trim() || formData.identifier
+                          }`.trim() || "Individual"
                         : formData.companyNames?.filter(Boolean).join(", ") ||
-                          formData.identifier}{" "}
-                      / {formData.identifier}
+                          "Company"}
                     </h2>
                   </motion.div>
                 )}
@@ -953,9 +955,9 @@ export default function Home() {
                     formData?.entityType === "individual"
                       ? `${formData.firstName || ""} ${
                           formData.lastName || ""
-                        }`.trim() || formData?.identifier
+                        }`.trim() || "Individual"
                       : formData?.companyNames?.filter(Boolean).join(", ") ||
-                        formData?.identifier
+                        "Company"
                   }
                   isApiProcessing={isNode3Processing}
                   isApiCompleted={apiNodeCompleted}

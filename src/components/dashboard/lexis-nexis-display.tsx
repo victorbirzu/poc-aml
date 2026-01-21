@@ -71,14 +71,14 @@ function getRiskTagVariant(tag: string) {
 }
 
 export default function LexisNexisDisplay({ data }: LexisNexisDisplayProps) {
-  if (!data) {
+  if (!data || Array.isArray(data) && !data[0]?.isFound) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Lexis Nexis</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No data available</p>
+          <p className="text-muted-foreground">{data[0]?.message || "No data available"}</p>
         </CardContent>
       </Card>
     );

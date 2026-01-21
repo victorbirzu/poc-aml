@@ -345,7 +345,7 @@ export default function DashboardPage({
             <CardContent>
               {dashboard2Content ? (
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <ReactMarkdown>{dashboard2Content}</ReactMarkdown>
+                  {dashboard2Content=="[]" ? <p>No data available</p> : <ReactMarkdown>{dashboard2Content}</ReactMarkdown>}
                 </div>
               ) : (
                 <p>Loading content...</p>
