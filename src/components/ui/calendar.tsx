@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
+import { DayPicker, type DropdownProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -13,17 +13,31 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  captionLayout = "buttons",
+  formatters,
+  components,
   ...props
 }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      captionLayout={captionLayout}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: cn(
+          "text-sm font-medium",
+          (captionLayout === "dropdown" || captionLayout === "dropdown-buttons") && "hidden"
+        ),
+        caption_dropdowns: "flex items-center justify-center gap-1.5 text-sm font-medium",
+        dropdown: cn(
+          "relative inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 appearance-none pr-8"
+        ),
+        dropdown_month: "relative inline-flex items-center",
+        dropdown_year: "relative inline-flex items-center",
+        dropdown_icon: "h-4 w-4 opacity-50 absolute right-2 pointer-events-none",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -53,6 +67,12 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
+      formatters={{
+        formatMonthCaption: (date: Date) =>
+          date.toLocaleString("default", { month: "short" }),
+        formatYearCaption: (date: Date) => date.getFullYear().toString(),
+        ...formatters,
+      }}
       components={{
         IconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
@@ -60,6 +80,22 @@ function Calendar({
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
+        Dropdown: ({ name, className, ...props }: DropdownProps) => {
+          return (
+            <select
+              name={name}
+              className={cn(
+                "relative inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 appearance-none pr-8",
+                className
+              )}
+              {...props}
+            />
+          )
+        },
+        IconDropdown: ({ className, ...props }) => (
+          <ChevronDown className={cn("h-4 w-4 opacity-50 absolute right-2 pointer-events-none", className)} {...props} />
+        ),
+        ...components,
       }}
       {...props}
     />

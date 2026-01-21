@@ -44,12 +44,15 @@ export async function processEntity(formData: PostBody) {
 export async function processEntityForDashboard1(formData: PostBody) {
   try {
     const apiUrl =
-      process.env.API_WEBHOOK_URL_1 ||
+      process.env.API_WEBHOOK_URL_1 ||  
       process.env.NEXT_PUBLIC_API_WEBHOOK_URL_1;
     if (!apiUrl) {
       throw new Error("API webhook URL for node 1 is not configured");
     }
-
+    // Create AbortController with increased timeout (10 minutes)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000); // 15 minutes
+    
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -58,7 +61,10 @@ export async function processEntityForDashboard1(formData: PostBody) {
       body: JSON.stringify({
         cautat: formData.name,
       }),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,6 +88,8 @@ export async function processEntityForDashboard2(formData: PostBody) {
     if (!apiUrl) {
       throw new Error("API webhook URL for node 2 is not configured");
     }
+
+    console.log("formData", formData.name);
 
     const response = await fetch(apiUrl, {
       method: "POST",

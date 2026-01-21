@@ -735,8 +735,11 @@ export default function Home() {
                               >
                                 <Calendar
                                   mode="single"
+                                  captionLayout="dropdown"
                                   selected={field.value || undefined}
                                   onSelect={field.onChange}
+                                  fromDate={new Date("1900-01-01")}
+                                  toDate={new Date()}
                                   disabled={(date) =>
                                     date > new Date() ||
                                     date < new Date("1900-01-01")

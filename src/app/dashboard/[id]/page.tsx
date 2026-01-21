@@ -196,21 +196,37 @@ export default function DashboardPage({
     }
 
     const report = dashboard1Data;
+    const cases = report?.output?.aggregated_report?.cases || [];
+    const hasCases = Array.isArray(cases) && cases.length > 0;
 
     return (
       <DashboardLayout>
         <div className="animate-slide-in space-y-4 md:space-y-6">
-          <SummaryCards
+          
+          {hasCases ? (
+            <>
+            <SummaryCards
             header={report.output.aggregated_report.header}
             subject={report.output.searched_subject}
           />
           <NarrativeSummaryCard
             summary={report.output.aggregated_report.narrative_summary}
           />
-          <TransactionsTable
-            data={report.output.aggregated_report.cases}
-            report={report.output}
-          />
+            <TransactionsTable
+              data={cases}
+              report={report.output}
+            />
+            </>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Case History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">No data found</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DashboardLayout>
     );
