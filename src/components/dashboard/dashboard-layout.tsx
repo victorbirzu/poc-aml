@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { Bell, Home, Settings } from "lucide-react";
+import { Bell, Home } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -44,12 +44,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarMenuButton isActive>
                 <Home />
                 Dashboard
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Settings />
-                Settings
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

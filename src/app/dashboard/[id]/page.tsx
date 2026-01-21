@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { AmlReport } from "@/lib/types";
 import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import SummaryCards from "@/components/dashboard/summary-cards";
 import NarrativeSummaryCard from "@/components/dashboard/narrative-summary-card";
 import { TransactionsTable } from "@/components/dashboard/transactions-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import JsonDisplay from "@/components/dashboard/json-display";
 import LexisNexisDisplay from "@/components/dashboard/lexis-nexis-display";
 
@@ -17,6 +21,7 @@ export default function DashboardPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [apiContent, setApiContent] = useState<string | null>(null);
   const [dashboard2Content, setDashboard2Content] = useState<string | null>(
     null
@@ -155,20 +160,80 @@ export default function DashboardPage({
     return (
       <DashboardLayout>
         <div className="animate-slide-in space-y-4 md:space-y-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           <Card>
             <CardHeader>
               <CardTitle>Reputational & Adverse Media</CardTitle>
             </CardHeader>
             <CardContent>
               {apiContent ? (
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <ReactMarkdown>{apiContent}</ReactMarkdown>
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-table:overflow-x-auto">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ children, ...props }) => (
+                        <div className="overflow-x-auto my-4">
+                          <table
+                            className="min-w-full divide-y divide-border border border-border rounded-md"
+                            {...props}
+                          >
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children, ...props }) => (
+                        <thead className="bg-muted" {...props}>
+                          {children}
+                        </thead>
+                      ),
+                      tbody: ({ children, ...props }) => (
+                        <tbody className="divide-y divide-border" {...props}>
+                          {children}
+                        </tbody>
+                      ),
+                      tr: ({ children, ...props }) => (
+                        <tr className="hover:bg-muted/50 transition-colors" {...props}>
+                          {children}
+                        </tr>
+                      ),
+                      th: ({ children, ...props }) => (
+                        <th
+                          className="px-4 py-3 text-left text-sm font-semibold text-foreground"
+                          {...props}
+                        >
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children, ...props }) => (
+                        <td className="px-4 py-3 text-sm text-foreground" {...props}>
+                          {children}
+                        </td>
+                      ),
+                    }}
+                  >
+                    {apiContent}
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <p>Loading content...</p>
               )}
             </CardContent>
           </Card>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -178,7 +243,14 @@ export default function DashboardPage({
     if (isLoading) {
       return (
         <DashboardLayout>
-          <div className="flex h-full items-center justify-center">
+          <div className="flex flex-col h-full items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
             <p>Loading data...</p>
           </div>
         </DashboardLayout>
@@ -188,7 +260,14 @@ export default function DashboardPage({
     if (!dashboard1Data) {
       return (
         <DashboardLayout>
-          <div className="flex h-full items-center justify-center">
+          <div className="flex flex-col h-full items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
             <p>No data available. Please perform a search first.</p>
           </div>
         </DashboardLayout>
@@ -202,7 +281,14 @@ export default function DashboardPage({
     return (
       <DashboardLayout>
         <div className="animate-slide-in space-y-4 md:space-y-6">
-          
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           {hasCases ? (
             <>
             <SummaryCards
@@ -227,6 +313,14 @@ export default function DashboardPage({
               </CardContent>
             </Card>
           )}
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -236,6 +330,14 @@ export default function DashboardPage({
     return (
       <DashboardLayout>
         <div className="animate-slide-in space-y-4 md:space-y-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           <Card>
             <CardHeader>
               <CardTitle>Screening</CardTitle>
@@ -250,6 +352,14 @@ export default function DashboardPage({
               )}
             </CardContent>
           </Card>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -259,6 +369,14 @@ export default function DashboardPage({
     return (
       <DashboardLayout>
         <div className="animate-slide-in space-y-4 md:space-y-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           {isLoading ? (
             <Card>
               <CardContent className="pt-6">
@@ -277,6 +395,14 @@ export default function DashboardPage({
               </CardContent>
             </Card>
           )}
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -286,6 +412,14 @@ export default function DashboardPage({
   return (
     <DashboardLayout>
       <div className="animate-slide-in space-y-4 md:space-y-6">
+        <Button
+          variant="outline"
+          onClick={() => router.push("/")}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
         <Card>
           <CardHeader>
             <CardTitle>Dashboard for ID: {id}</CardTitle>
@@ -294,6 +428,14 @@ export default function DashboardPage({
             <p>No data available for this ID. Please perform a search first.</p>
           </CardContent>
         </Card>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/")}
+          className="mt-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
       </div>
     </DashboardLayout>
   );
