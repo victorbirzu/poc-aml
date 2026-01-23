@@ -52,7 +52,7 @@ export type Case = {
   case_types: string[];
   procedural_status: string;
   subject_role: string;
-  outcome_for_subject: 'wins' | 'loses';
+  outcome_for_subject: 'winning' | 'losing';
   financial_impact: FinancialImpact;
   aml_esg_dd_flags_in_case: string[];
   case_categories: string[];

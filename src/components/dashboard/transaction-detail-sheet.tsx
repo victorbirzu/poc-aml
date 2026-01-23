@@ -78,7 +78,7 @@ export function TransactionDetailSheet({
                   </span>
                   <Badge
                     variant={
-                      selectedCase.outcome_for_subject === 'wins'
+                      selectedCase.outcome_for_subject === 'winning'
                         ? 'success'
                         : 'destructive'
                     }

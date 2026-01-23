@@ -94,8 +94,8 @@ export function TransactionsTable({ data, report }: TransactionsTableProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Outcomes</SelectItem>
-              <SelectItem value="wins">Wins</SelectItem>
-              <SelectItem value="loses">Loses</SelectItem>
+              <SelectItem value="winning">Winning</SelectItem>
+              <SelectItem value="losing">Losing</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -105,7 +105,7 @@ export function TransactionsTable({ data, report }: TransactionsTableProps) {
         <div className="space-y-2 md:hidden">
           {sortedData.map((c) => (
             <div
-              key={c.case_number}
+              key={c.case_number+c.case_topic}
               onClick={() => setSelectedCase(c)}
               className="cursor-pointer border-b p-4 last:border-b-0"
             >
@@ -125,7 +125,7 @@ export function TransactionsTable({ data, report }: TransactionsTableProps) {
                 </p>
                 <Badge
                   variant={
-                    c.outcome_for_subject === 'wins' ? 'success' : 'destructive'
+                    c.outcome_for_subject === 'winning' ? 'success' : 'destructive'
                   }
                   className='capitalize'
                 >
@@ -165,7 +165,7 @@ export function TransactionsTable({ data, report }: TransactionsTableProps) {
             <TableBody>
               {sortedData.map((c) => (
                 <TableRow
-                  key={c.case_number}
+                  key={c.case_number+c.case_topic}
                   onClick={() => setSelectedCase(c)}
                   className="cursor-pointer"
                 >
@@ -180,7 +180,7 @@ export function TransactionsTable({ data, report }: TransactionsTableProps) {
                   <TableCell>
                     <Badge
                       variant={
-                        c.outcome_for_subject === 'wins' ? 'success' : 'destructive'
+                        c.outcome_for_subject === 'winning' ? 'success' : 'destructive'
                       }
                       className="capitalize"
                     >
